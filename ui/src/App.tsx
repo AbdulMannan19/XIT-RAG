@@ -29,39 +29,45 @@ interface Message {
 const SUGGESTION_CHIPS = [
   {
     text: 'Find IRS Forms (1040, W‑2, 1099)',
-    color: 'from-blue-600 to-blue-700',
-    bgColor: 'bg-blue-600',
-    hoverColor: 'hover:from-blue-700 hover:to-blue-800',
+    // rgb(67,166,246)
+    color: 'from-[#43A6F6] to-[#2E8FE3]',
+    bgColor: 'bg-[#43A6F6]',
+    hoverColor: 'hover:from-[#2E8FE3] hover:to-[#257ACB]',
   },
   {
     text: 'Deduction & credit guidance',
-    color: 'from-indigo-600 to-indigo-700',
-    bgColor: 'bg-indigo-600',
-    hoverColor: 'hover:from-indigo-700 hover:to-indigo-800',
+    // rgb(177,102,142)
+    color: 'from-[#B1668E] to-[#9B4F77]',
+    bgColor: 'bg-[#B1668E]',
+    hoverColor: 'hover:from-[#9B4F77] hover:to-[#844263]',
   },
   {
     text: 'Corporate filing help',
-    color: 'from-slate-700 to-slate-800',
-    bgColor: 'bg-slate-700',
-    hoverColor: 'hover:from-slate-800 hover:to-black',
+    // rgb(240,162,78)
+    color: 'from-[#F0A24E] to-[#DC8E3B]',
+    bgColor: 'bg-[#F0A24E]',
+    hoverColor: 'hover:from-[#DC8E3B] hover:to-[#C97F33]',
   },
   {
     text: 'Estimate quarterly tax payments',
-    color: 'from-emerald-600 to-emerald-700',
-    bgColor: 'bg-emerald-600',
-    hoverColor: 'hover:from-emerald-700 hover:to-emerald-800',
+    // rgb(111,168,116)
+    color: 'from-[#6FA874] to-[#5B9362]',
+    bgColor: 'bg-[#6FA874]',
+    hoverColor: 'hover:from-[#5B9362] hover:to-[#4E8255]',
   },
   {
     text: ' What is the Child Tax Credit?',
-    color: 'from-rose-600 to-rose-700',
-    bgColor: 'bg-rose-600',
-    hoverColor: 'hover:from-rose-700 hover:to-rose-800',
+    // rgb(124,115,184)
+    color: 'from-[#7C73B8] to-[#675EA4]',
+    bgColor: 'bg-[#7C73B8]',
+    hoverColor: 'hover:from-[#675EA4] hover:to-[#5B5497]',
   },
   {
     text: '1099 vs W‑2 rules',
-    color: 'from-cyan-600 to-cyan-700',
-    bgColor: 'bg-cyan-600',
-    hoverColor: 'hover:from-cyan-700 hover:to-cyan-800',
+    // rgb(102,166,152)
+    color: 'from-[#66A698] to-[#4F907F]',
+    bgColor: 'bg-[#66A698]',
+    hoverColor: 'hover:from-[#4F907F] hover:to-[#3E7E6E]',
   },
 ]
 
@@ -161,21 +167,19 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      {/* Ambient background */}
-      <div className="ambient-bg absolute inset-0 -z-10" />
+    <div className="min-h-screen bg-white flex flex-col">
       {!hasSubmitted ? (
         // Homepage - Before Query
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 md:py-20 lg:py-24 bg-gradient-to-b from-gray-50/30 via-white to-gray-50/30">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 md:py-20 lg:py-24">
           {/* Main Title */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-light text-gray-900 mb-14 md:mb-16 text-center tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-medium text-gray-900 mb-10 md:mb-12 text-center tracking-tight">
             What can I help with?
           </h1>
 
           {/* Input Bar */}
           <div className="w-full max-w-3xl mb-12 md:mb-16">
-            <div className="relative bg-white rounded-2xl shadow-lg hover:shadow-xl focus-within:shadow-xl focus-within:ring-2 focus-within:ring-blue-500/20 transition-all duration-300 border border-gray-100">
-              <div className="flex items-center px-6 md:px-8 py-4 md:py-5">
+            <div className="relative bg-white rounded-full shadow-md hover:shadow-lg focus-within:shadow-lg focus-within:ring-2 focus-within:ring-blue-500/10 transition-all duration-300 border border-gray-100">
+              <div className="flex items-center px-6 md:px-7 py-3.5 md:py-4">
                 <input
                   type="text"
                   value={query}
@@ -192,7 +196,7 @@ export function App() {
                 <button
                   onClick={() => handleSubmit(query)}
                   disabled={!query.trim()}
-                  className="ml-4 text-white bg-gradient-to-r from-gray-800 to-gray-900 px-4 py-2 rounded-xl font-semibold shadow-lg hover:from-gray-900 hover:to-black disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+                  className="ml-3 text-white bg-gradient-to-r from-gray-800 to-gray-900 px-4 py-2 rounded-full font-semibold shadow-md hover:from-gray-900 hover:to-black disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
                   aria-label="Send"
                 >
                   <svg
@@ -214,17 +218,16 @@ export function App() {
               <button
                 key={index}
                 onClick={() => handleChipClick(chip.text)}
-                className={`group relative overflow-hidden bg-gradient-to-r ${chip.color} ${chip.hoverColor} text-white px-5 md:px-6 py-3 md:py-3.5 rounded-xl font-medium text-sm md:text-sm flex items-center justify-center gap-2 shadow-lg/70 hover:shadow-xl active:scale-[0.98] transition-all duration-300 hover:-translate-y-0.5 border border-white/20`}
+                className={`group relative overflow-hidden bg-gradient-to-r ${chip.color} ${chip.hoverColor} text-white px-5 md:px-6 py-3 md:py-3.5 rounded-full font-medium text-sm md:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98] transition-all duration-300 border border-white/20`}
               >
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300"></div>
                 <svg
-                  className="w-4 h-4 md:w-4 md:h-4 flex-shrink-0 relative z-10 drop-shadow-sm"
+                  className="w-4 h-4 md:w-4 md:h-4 flex-shrink-0"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
-                <span className="text-center relative z-10 drop-shadow-sm">{chip.text}</span>
+                <span className="text-center">{chip.text}</span>
               </button>
             ))}
           </div>
