@@ -2,75 +2,80 @@
 
 ```mermaid
 flowchart LR
+  %% ============================
   %% Frontend
+  %% ============================
   subgraph FE[Frontend]
-    UI["Vite + React UI\nhttp://localhost:5173"]
+    UI["Vite + React UI<br/>http://localhost:5173"]
   end
-
+  %% ============================
   %% Backend API
-  subgraph BE[Backend API (FastAPI)]
-    API["FastAPI Service\nuvicorn app.api.main:app\nhttp://localhost:8000"]
-    RATELIMIT["Rate Limiting (slowapi)"]
+  %% ============================
+  subgraph BE["Backend API (FastAPI)"]
+    API["FastAPI Service<br/>uvicorn app.api.main:app<br/>http://localhost:8000"]
     AUTH["API Key Auth"]
+    RATELIMIT["Rate Limiting<br/>(slowapi)"]
     RETRIEVER["Retriever + Reranker"]
     RAG["RAG Orchestrator"]
   end
-
+  %% ============================
   %% Vector DB
+  %% ============================
   subgraph VDB[Vector DB]
-    QDRANT["Qdrant (HNSW)\n:6333 HTTP / :6334 gRPC\nPersisted to ai/infra/qdrant"]
+    QDRANT["Qdrant (HNSW)<br/>:6333 HTTP / :6334 gRPC<br/>Persisted in ai/infra/qdrant"]
   end
-
+  %% ============================
   %% External Providers
-  subgraph EXT[External/Optional Providers]
-    OPENAI[(OpenAI\nLLM + Embeddings)]
-    OLLAMA[(Ollama\nLocal LLM)]
+  %% ============================
+  subgraph EXT["External / Optional Providers"]
+    OPENAI[("OpenAI<br/>LLM + Embeddings")]
+    OLLAMA[("Ollama<br/>Local LLM")]
   end
-
+  %% ============================
   %% Ingestion Pipeline
+  %% ============================
   subgraph ING[Ingestion Pipeline]
-    CRAWL["Crawler\n(robots-aware)"]
-    PARSE["Parsers\n(HTML + PDF)"]
-    CHUNK["Chunker\n(section-aware + overlap)"]
-    EMBED["Embedder\n(OpenAI or local ST)"]
-    UPSERT["Upserter\n(Qdrant)"]
+    CRAWL["Crawler<br/>(robots-aware)"]
+    PARSE["Parsers<br/>(HTML + PDF)"]
+    CHUNK["Chunker<br/>(section-aware + overlap)"]
+    EMBED["Embedder<br/>(OpenAI or Local ST Models)"]
+    UPSERT["Upserter<br/>(Qdrant)"]
   end
-
-  %% User to UI to API
-  USER(("End User")) -->|HTTP(S)| UI
-  UI -->|/v1/* via proxy| API
-
-  %% API internals
+  %% ============================
+  %% Config
+  %% ============================
+  subgraph CFG[Configuration]
+    ENV[".env / pydantic-settings"]
+  end
+  %% ============================
+  %% Main Flows
+  %% ============================
+  USER(("End User")) -->|"HTTP(S)"| UI
+  UI -->|"API Proxy /v1/*"| API
   API --> AUTH
   API --> RATELIMIT
   API --> RAG
   RAG --> RETRIEVER
-  RETRIEVER -->|vector search| QDRANT
-  RETRIEVER -->|optional rerank| RAG
-  RAG -->|LLM calls| OPENAI
-  RAG -.->|optional| OLLAMA
-
-  %% Ingestion path
+  RETRIEVER -->|Vector Search| QDRANT
+  RETRIEVER -->|Optional Rerank| RAG
+  RAG -->|LLM Calls| OPENAI
+  RAG -.->|Optional Local LLM| OLLAMA
   CRAWL --> PARSE --> CHUNK --> EMBED --> UPSERT --> QDRANT
-
-  %% Config and Env
-  subgraph CFG[Configuration]
-    ENV[".env / pydantic-settings"]
-  end
   ENV -.-> API
   ENV -.-> ING
   ENV -.-> QDRANT
-
-  %% Networks & Containers
+  %% ============================
+  %% Docker Compose Network
+  %% ============================
   subgraph DC[Docker Compose Network]
     API
     QDRANT
   end
-
-  classDef svc fill:#eef7ff,stroke:#7aa7e9,color:#0a2a66;
-  classDef ext fill:#fff7e6,stroke:#e7a441,color:#7a4b00;
-  class API,RAG,RETRIEVER,RATELIMIT,AUTH svc;
-  class OPENAI,OLLAMA ext;
+  %% Classes
+  classDef svc fill:#eef7ff,stroke:#7aa7e9,color:#0a2a66
+  classDef ext fill:#fff7e6,stroke:#e7a441,color:#7a4b00
+  class API,RAG,RETRIEVER,RATELIMIT,AUTH svc
+  class OPENAI,OLLAMA ext
 ```
 
 ## Notes
