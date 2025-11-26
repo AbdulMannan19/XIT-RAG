@@ -32,8 +32,7 @@ env/
 *.swo
 *~
 
-# Environment
-.env
+
 .env.local
 
 # Data
