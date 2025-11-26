@@ -200,19 +200,19 @@ def process_page(url: str, crawler, storage: StorageManager, collection_name: st
 
 @app.command()
 def main(
-    seed: str = typer.Option(settings.crawl_base, help="Seed URL to start crawling"),
-    max_pages: int = typer.Option(1500, help="Maximum number of pages to crawl"),
-    concurrency: int = typer.Option(4, help="Number of concurrent workers"),
-    allow_pdf: bool = typer.Option(True, help="Allow PDF crawling"),
-    collection_name: str = typer.Option(settings.collection_name, help="Qdrant collection name"),
-    url_file: Optional[str] = typer.Option(None, help="Path to a file containing URLs to ingest (one per line)"),
-    forms: Optional[str] = typer.Option(None, help="Comma-separated list of IRS form numbers to ingest (e.g., '1120,4562,4626')"),
-    allow_prefix: Optional[str] = typer.Option(None, help="Comma-separated list of path prefixes to ALLOW (e.g., '/pub/irs-pdf,/forms-instructions')"),
-    block_prefix: Optional[str] = typer.Option(None, help="Comma-separated list of path prefixes to BLOCK (e.g., '/newsroom/archived')"),
-    only_pdf: bool = typer.Option(False, help="If true, only process PDF URLs"),
-    only_html: bool = typer.Option(False, help="If true, only process HTML URLs"),
-    include_seed: bool = typer.Option(True, help="Include the seed URL itself in targets before filtering"),
-    follow_links: bool = typer.Option(False, help="Shallowly collect links from the seed page itself"),
+    seed: str = settings.crawl_base,
+    max_pages: int = 1500,
+    concurrency: int = 4,
+    allow_pdf: bool = True,
+    collection_name: str = settings.collection_name,
+    url_file: Optional[str] = None,
+    forms: Optional[str] = None,
+    allow_prefix: Optional[str] = None,
+    block_prefix: Optional[str] = None,
+    only_pdf: bool = False,
+    only_html: bool = False,
+    include_seed: bool = True,
+    follow_links: bool = False,
 ):
     """Ingest IRS.gov content: crawl, parse, chunk, embed, and upsert to Qdrant."""
     logger.info(f"Starting ingestion: seed={seed}, max_pages={max_pages}, concurrency={concurrency}")
