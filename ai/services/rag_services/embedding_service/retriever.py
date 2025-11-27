@@ -7,7 +7,7 @@ import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-from core.config import settings
+from services.rag_services.core_services.config import settings
 
 logger = logging.getLogger(__name__)
 

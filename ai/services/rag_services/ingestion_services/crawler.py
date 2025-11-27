@@ -9,9 +9,9 @@ from urllib.robotparser import RobotFileParser
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from core.config import settings
-from core.utils import is_irs_domain, normalize_url
-from ingestion.models import ContentType, CrawledPage
+from services.rag_services.core_services.config import settings
+from services.rag_services.core_services.utils import is_irs_domain, normalize_url
+from services.rag_services.ingestion_services.models import ContentType, CrawledPage
 
 logger = logging.getLogger(__name__)
 

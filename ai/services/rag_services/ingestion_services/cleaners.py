@@ -3,7 +3,7 @@
 import re
 from typing import Optional
 
-from core.utils import normalize_text
+from services.rag_services.core_services.utils import normalize_text
 
 
 def remove_boilerplate(text: str) -> str:

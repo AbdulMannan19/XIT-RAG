@@ -3,16 +3,28 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from fastapi import APIRouter, HTTPException, Request, status, Header
 
-from core.config import settings
-from core.schemas import ChatRequest, ChatResponse, Source, AdminStats, ReindexRequest
-from core.security import verify_api_key
-from generation.pipeline import RAGPipeline
-from vector.qdrant_client import get_client, get_collection_info, ensure_collection
-from vector.embeddings import get_embedding_provider
-from ingestion.crawler import create_crawler
-from ingestion.sitemap import get_seed_urls
-from ingestion.storage import StorageManager
-from scripts.ingest import process_page
+from services.rag_services.core_services import (
+    settings,
+    ChatRequest,
+    ChatResponse,
+    Source,
+    AdminStats,
+    ReindexRequest,
+    verify_api_key,
+)
+from services.rag_services.generation_service import RAGPipeline
+from services.rag_services.embedding_service import (
+    get_client,
+    get_collection_info,
+    ensure_collection,
+    get_embedding_provider,
+)
+from services.rag_services.ingestion_services import (
+    create_crawler,
+    get_seed_urls,
+    StorageManager,
+    process_page,
+)
 
 router = APIRouter()
 

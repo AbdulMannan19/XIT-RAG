@@ -7,8 +7,8 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
-from core.config import settings
-from core.utils import is_irs_domain, normalize_url
+from services.rag_services.core_services.config import settings
+from services.rag_services.core_services.utils import is_irs_domain, normalize_url
 
 logger = logging.getLogger(__name__)
 

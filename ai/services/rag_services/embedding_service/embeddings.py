@@ -7,7 +7,7 @@ import numpy as np
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
 
-from core.config import settings
+from services.rag_services.core_services.config import settings
 
 logger = logging.getLogger(__name__)
 

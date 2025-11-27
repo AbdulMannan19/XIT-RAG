@@ -13,17 +13,17 @@ from tqdm import tqdm
 from bs4 import BeautifulSoup
 import httpx
 
-from core.config import settings
-from core.utils import compute_content_hash
-from ingestion.chunker import chunk_page
-from ingestion.crawler import create_crawler
-from ingestion.parse_html import parse_html
-from ingestion.parse_pdf import parse_pdf
-from ingestion.sitemap import get_seed_urls
-from ingestion.storage import StorageManager
-from vector.embeddings import get_embedding_provider
-from vector.qdrant_client import ensure_collection, get_client
-from vector.qdrant_client import get_client as get_qdrant_client
+from services.rag_services.core_services.config import settings
+from services.rag_services.core_services.utils import compute_content_hash
+from services.rag_services.ingestion_services.chunker import chunk_page
+from services.rag_services.ingestion_services.crawler import create_crawler
+from services.rag_services.ingestion_services.parse_html import parse_html
+from services.rag_services.ingestion_services.parse_pdf import parse_pdf
+from services.rag_services.ingestion_services.sitemap import get_seed_urls
+from services.rag_services.ingestion_services.storage import StorageManager
+from services.rag_services.embedding_service.embeddings import get_embedding_provider
+from services.rag_services.embedding_service.qdrant_client import ensure_collection, get_client
+from services.rag_services.embedding_service.qdrant_client import get_client as get_qdrant_client
 
 logger = logging.getLogger(__name__)
 

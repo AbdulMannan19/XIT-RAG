@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 from openai import OpenAI
 
-from core.config import settings
+from services.rag_services.core_services.config import settings
 
 logger = logging.getLogger(__name__)
 

@@ -6,16 +6,16 @@ from typing import Any, Optional
 import numpy as np
 from qdrant_client import QdrantClient
 
-from core.config import settings
-from core.constants import NO_KB_MSG
-from core.prompts import build_no_results_prompt, build_rag_prompt
-from core.security import should_add_disclaimer
-from core.utils import estimate_tokens
-from generation.llm import get_llm_provider
-from vector.embeddings import get_embedding_provider
-from vector.qdrant_client import get_client
-from vector.reranker import get_reranker
-from vector.retriever import retrieve_with_cutoff
+from services.rag_services.core_services.config import settings
+from services.rag_services.core_services.constants import NO_KB_MSG
+from services.rag_services.core_services.prompts import build_no_results_prompt, build_rag_prompt
+from services.rag_services.core_services.security import should_add_disclaimer
+from services.rag_services.core_services.utils import estimate_tokens
+from services.rag_services.generation_service.llm import get_llm_provider
+from services.rag_services.embedding_service.embeddings import get_embedding_provider
+from services.rag_services.embedding_service.qdrant_client import get_client
+from services.rag_services.embedding_service.reranker import get_reranker
+from services.rag_services.embedding_service.retriever import retrieve_with_cutoff
 
 logger = logging.getLogger(__name__)
 
