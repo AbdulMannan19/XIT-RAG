@@ -1,47 +1,8 @@
-
 __pycache__/
 .venv
-
 .vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-
-.env.local
-
-# Data
 data/
-*.db
-*.sqlite
-*.sqlite3
 
-# Logs
-*.log
-logs/
-
-# Qdrant
-infra/qdrant/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
-# MyPy
-.mypy_cache/
-.dmypy.json
-dmypy.json
 
 
 
