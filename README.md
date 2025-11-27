@@ -1,31 +1,20 @@
-# IRS RAG Monorepo
-
-This repository hosts two isolated codebases:
-
-- ai/  — Python backend (FastAPI) with crawler, ingestion, embeddings, vector DB, retriever, and RAG pipeline
-- ui/  — React + Vite frontend (isolated from backend)
-
-## Getting Started
-
-### Backend (ai/)
-
-- See `ai/README.md` for full backend docs
-- Start services:
-  - `make -C ai up`
-  - API: http://localhost:8000
-  - Qdrant: http://localhost:6333
-
-### Frontend (ui/)
-
-- See `ui/README.md` for frontend docs
-- Dev server (after deps install): http://localhost:5173
-
-## Docker Compose
-
-The root `docker-compose.yml` orchestrates Qdrant and the API using the backend in `ai/`.
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.Dipy3XwvZ9HewzNDMrpKPnKfGXfoUu3NP4ZUZND3hKw
 
 
 
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python.exe -m pip install --upgrade pip
+uvicorn app.api.main:app --host 0.0.0.0 --port 8000 --reload
 
+git status
+git add .
+git config user.email "abdulmannan34695@gmail.com"
+git config user.name "AbdulMannan19"
+git commit -m "quick commit"
+git push
 
+Sample Queries
 
+What restrictions does Circular 230 have?
