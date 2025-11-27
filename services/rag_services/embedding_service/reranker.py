@@ -1,12 +1,9 @@
 """Cross-encoder reranking for improved retrieval."""
 
-import logging
 from typing import Any, Optional
 
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
-
-logger = logging.getLogger(__name__)
 
 
 class CrossEncoderReranker:
@@ -15,16 +12,13 @@ class CrossEncoderReranker:
     def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"):
         self.model_name = model_name
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info(f"Loading reranker model: {model_name} on {self.device}")
 
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(model_name)
             self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
             self.model.to(self.device)
             self.model.eval()
-            logger.info(f"Reranker loaded successfully")
         except Exception as e:
-            logger.error(f"Error loading reranker model: {e}")
             self.model = None
             self.tokenizer = None
 
@@ -33,7 +27,6 @@ class CrossEncoderReranker:
     ) -> list[dict[str, Any]]:
         """Rerank chunks using cross-encoder."""
         if not self.model or not self.tokenizer:
-            logger.warning("Reranker not available, returning original chunks")
             return chunks[:top_n]
 
         try:
@@ -63,11 +56,9 @@ class CrossEncoderReranker:
                 chunk["score"] = float(score)  # Use rerank score
                 reranked.append(chunk)
 
-            logger.info(f"Reranked {len(chunks)} chunks to top {top_n}")
             return reranked
 
         except Exception as e:
-            logger.error(f"Error during reranking: {e}")
             return chunks[:top_n]
 
 
@@ -79,7 +70,6 @@ def get_reranker(model_name: Optional[str] = None) -> Optional[CrossEncoderReran
     try:
         return CrossEncoderReranker(model_name)
     except Exception as e:
-        logger.warning(f"Could not initialize reranker: {e}")
         return None
 
 

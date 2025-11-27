@@ -6,7 +6,7 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 python.exe -m pip install --upgrade pip
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 
 
 git status

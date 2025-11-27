@@ -12,7 +12,6 @@ from .schemas import (
     ChunkMetadata,
     VectorChunk,
 )
-from .security import verify_api_key, should_add_disclaimer
 from .utils import *
 
 __all__ = [
@@ -27,6 +26,4 @@ __all__ = [
     "ReindexRequest",
     "ChunkMetadata",
     "VectorChunk",
-    "verify_api_key",
-    "should_add_disclaimer",
 ]

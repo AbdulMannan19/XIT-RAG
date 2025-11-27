@@ -1,13 +1,10 @@
 """LLM provider abstraction."""
 
-import logging
 from typing import Any, Optional
 
 from openai import OpenAI
 
-from services.rag_services.core_services.config import settings
-
-logger = logging.getLogger(__name__)
+from services.core_services import settings
 
 
 class LLMProvider:
@@ -46,7 +43,6 @@ class OpenAILLMProvider(LLMProvider):
 
             return response.choices[0].message.content.strip()
         except Exception as e:
-            logger.error(f"Error generating with OpenAI: {e}")
             raise
 
 
@@ -84,7 +80,6 @@ class OllamaLLMProvider(LLMProvider):
             result = response.json()
             return result.get("response", "").strip()
         except Exception as e:
-            logger.error(f"Error generating with Ollama: {e}")
             raise
 
 

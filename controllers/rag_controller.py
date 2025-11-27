@@ -1,30 +1,18 @@
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from fastapi import APIRouter, HTTPException, Request, status, Header
 
-from services.rag_services.core_services import (
+from services.core_services import (
     settings,
     ChatRequest,
     ChatResponse,
     Source,
     AdminStats,
     ReindexRequest,
-    verify_api_key,
 )
 from services.rag_services.generation_service import RAGPipeline
-from services.rag_services.embedding_service import (
-    get_client,
-    get_collection_info,
-    ensure_collection,
-    get_embedding_provider,
-)
-from services.rag_services.ingestion_services import (
-    create_crawler,
-    get_seed_urls,
-    StorageManager,
-    process_page,
-)
+from services.rag_services.embedding_service import get_client, get_collection_info
+from handlers.ingestion_handler import handle_ingestion
 
 router = APIRouter()
 
@@ -66,10 +54,9 @@ async def chat(request: ChatRequest, request_obj: Request):
 
 
 @router.get("/stats", response_model=AdminStats)
-async def get_stats(x_api_key: str = Header(..., alias="X-API-Key")):
+async def get_stats():
     """Get collection statistics."""
     try:
-        await verify_api_key(x_api_key)
         info = get_collection_info(qdrant_client, settings.collection_name)
 
         stats = AdminStats(
@@ -88,10 +75,9 @@ async def get_stats(x_api_key: str = Header(..., alias="X-API-Key")):
 
 
 @router.post("/reindex")
-async def reindex(request: ReindexRequest, x_api_key: str = Header(..., alias="X-API-Key")):
+async def reindex(request: ReindexRequest):
     """Trigger reindexing of collection."""
     try:
-        await verify_api_key(x_api_key)
         return {"status": "accepted", "message": "Reindex job queued"}
 
     except HTTPException:
@@ -102,51 +88,14 @@ async def reindex(request: ReindexRequest, x_api_key: str = Header(..., alias="X
 
 @router.post("/ingest")
 async def trigger_ingest(
-    x_api_key: str = Header(..., alias="X-API-Key"),
     seed_url: str = settings.crawl_base,
     max_pages: int = 100,
     concurrency: int = 2,
 ):
-    """Trigger ingestion pipeline."""
+
     try:
-        await verify_api_key(x_api_key)
-
-        crawler = create_crawler(seed_url)
-        storage = StorageManager()
-        collection_name = settings.collection_name
-
-        embedding_provider = get_embedding_provider()
-        ensure_collection(qdrant_client, collection_name, embedding_provider.vector_size)
-
-        target_urls = get_seed_urls(seed_url, max_urls=max_pages)
-        target_urls = target_urls[:max_pages]
-
-        processed = 0
-        total_chunks = 0
-
-        with ThreadPoolExecutor(max_workers=concurrency) as executor:
-            futures = {executor.submit(process_page, url, crawler, storage, collection_name): url for url in target_urls}
-
-            for future in as_completed(futures):
-                try:
-                    chunks_count = future.result()
-                    if chunks_count:
-                        processed += 1
-                        total_chunks += chunks_count
-                except Exception:
-                    pass
-
-        crawler.close()
-
-        return {
-            "status": "completed",
-            "message": "Ingestion completed successfully",
-            "seed_url": seed_url,
-            "max_pages": max_pages,
-            "concurrency": concurrency,
-            "pages_processed": processed,
-            "total_chunks": total_chunks,
-        }
+        result = handle_ingestion(seed_url, max_pages, concurrency, qdrant_client)
+        return result
 
     except HTTPException:
         raise

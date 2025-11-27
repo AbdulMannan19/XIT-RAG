@@ -1,3 +1,10 @@
+import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*XMLParsedAsHTMLWarning.*")
+warnings.filterwarnings("ignore", message=".*resume_download.*")
+warnings.filterwarnings("ignore", message=".*shadows an attribute.*")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

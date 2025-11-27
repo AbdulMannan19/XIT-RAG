@@ -1,45 +1,30 @@
-"""Storage utilities for raw and cleaned data."""
-
-import json
-import logging
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import orjson
 
-from services.rag_services.core_services.utils import compute_content_hash
-from services.rag_services.ingestion_services.models import Chunk, CrawledPage
-
-logger = logging.getLogger(__name__)
+from models import Chunk, CrawledPage
+from services.core_services import compute_content_hash
 
 
 class StorageManager:
-    """Manages storage of raw and cleaned data."""
-
     def __init__(self, base_dir: str = "data"):
         self.base_dir = Path(base_dir)
         self.raw_dir = self.base_dir / "raw"
         self.clean_dir = self.base_dir / "clean"
         self.chunks_dir = self.base_dir / "chunks"
 
-        # Create directories
         for dir_path in [self.raw_dir, self.clean_dir, self.chunks_dir]:
             dir_path.mkdir(parents=True, exist_ok=True)
 
     def save_raw_page(self, page: CrawledPage) -> str:
-        """Save raw page data to JSONL file."""
-        # Compute hash
         page.content_hash = compute_content_hash(page.raw_content)
 
-        # Create filename from URL hash
         url_hash = compute_content_hash(str(page.url))[:16]
         filename = f"{url_hash}.jsonl"
 
         filepath = self.raw_dir / filename
 
-        # Save as JSONL
         page_dict = {
             "url": str(page.url),
             "title": page.title,
@@ -52,8 +37,7 @@ class StorageManager:
             "raw_content_size": len(page.raw_content),
         }
 
-        # Save raw content separately (for large files)
-        if len(page.raw_content) > 100000:  # 100KB threshold
+        if len(page.raw_content) > 100000:
             content_file = self.raw_dir / f"{url_hash}.content"
             content_file.write_bytes(page.raw_content)
             page_dict["content_file"] = str(content_file)
@@ -61,11 +45,9 @@ class StorageManager:
         with open(filepath, "wb") as f:
             f.write(orjson.dumps(page_dict) + b"\n")
 
-        logger.debug(f"Saved raw page: {filepath}")
         return str(filepath)
 
     def save_cleaned_page(self, page: CrawledPage) -> str:
-        """Save cleaned page data."""
         url_hash = compute_content_hash(str(page.url))[:16]
         filename = f"{url_hash}.jsonl"
 
@@ -85,11 +67,9 @@ class StorageManager:
         with open(filepath, "wb") as f:
             f.write(orjson.dumps(page_dict) + b"\n")
 
-        logger.debug(f"Saved cleaned page: {filepath}")
         return str(filepath)
 
     def save_chunks(self, chunks: list[Chunk], page_url: str) -> str:
-        """Save chunks to JSONL file."""
         url_hash = compute_content_hash(page_url)[:16]
         filename = f"{url_hash}_chunks.jsonl"
 
@@ -112,11 +92,9 @@ class StorageManager:
                 }
                 f.write(orjson.dumps(chunk_dict) + b"\n")
 
-        logger.debug(f"Saved {len(chunks)} chunks to {filepath}")
         return str(filepath)
 
     def load_chunks(self, page_url: str) -> list[Chunk]:
-        """Load chunks for a page."""
         url_hash = compute_content_hash(page_url)[:16]
         filename = f"{url_hash}_chunks.jsonl"
         filepath = self.chunks_dir / filename
@@ -144,10 +122,3 @@ class StorageManager:
                 chunks.append(chunk)
 
         return chunks
-
-
-def get_storage_manager(base_dir: str = "data") -> StorageManager:
-    """Get storage manager instance."""
-    return StorageManager(base_dir=base_dir)
-
-

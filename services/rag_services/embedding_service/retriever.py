@@ -1,15 +1,12 @@
 """Vector retrieval with filtering and similarity cutoff."""
 
-import logging
 from typing import Any, Optional
 
 import numpy as np
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 
-from services.rag_services.core_services.config import settings
-
-logger = logging.getLogger(__name__)
+from services.core_services import settings
 
 
 def retrieve(
@@ -69,11 +66,9 @@ def retrieve(
                 }
             )
 
-        logger.info(f"Retrieved {len(results)} chunks (cutoff={cutoff})")
         return results
 
     except Exception as e:
-        logger.error(f"Error retrieving chunks: {e}")
         return []
 
 

@@ -1,23 +1,13 @@
 """RAG pipeline orchestration."""
 
-import logging
 from typing import Any, Optional
 
 import numpy as np
 from qdrant_client import QdrantClient
 
-from services.rag_services.core_services.config import settings
-from services.rag_services.core_services.constants import NO_KB_MSG
-from services.rag_services.core_services.prompts import build_no_results_prompt, build_rag_prompt
-from services.rag_services.core_services.security import should_add_disclaimer
-from services.rag_services.core_services.utils import estimate_tokens
-from services.rag_services.generation_service.llm import get_llm_provider
-from services.rag_services.embedding_service.embeddings import get_embedding_provider
-from services.rag_services.embedding_service.qdrant_client import get_client
-from services.rag_services.embedding_service.reranker import get_reranker
-from services.rag_services.embedding_service.retriever import retrieve_with_cutoff
-
-logger = logging.getLogger(__name__)
+from services.core_services import settings, NO_KB_MSG, build_no_results_prompt, build_rag_prompt, estimate_tokens
+from services.rag_services.generation_service import get_llm_provider
+from services.rag_services.embedding_service import get_embedding_provider, get_client, get_reranker, retrieve_with_cutoff
 
 
 class RAGPipeline:
@@ -58,7 +48,7 @@ class RAGPipeline:
             )
 
             if not chunks:
-                logger.warning(f"No chunks found for query: {query}")
+                print(f"❌ No chunks retrieved for query: {query[:50]}...")
                 return {
                     "answer_text": NO_KB_MSG,
                     "sources": [],
@@ -66,29 +56,38 @@ class RAGPipeline:
                     "query_embedding_similarity": [],
                 }
 
+            scores = [f"{c.get('score', 0):.3f}" for c in chunks[:3]]
+            print(f"✓ Retrieved {len(chunks)} chunks (scores: {scores}...)")
+
             # Step 3: Optional reranking
             if self.reranker and len(chunks) > top_n:
+                print(f"⟳ Reranking {len(chunks)} → {top_n} chunks...")
                 chunks = self.reranker.rerank(query, chunks, top_n=top_n)
+                reranked_scores = [f"{c.get('score', 0):.3f}" for c in chunks[:3]]
+                print(f"✓ Reranked (new scores: {reranked_scores}...)")
             else:
                 chunks = chunks[:top_n]
+                print(f"→ Using top {len(chunks)} chunks (no reranking)")
 
             # Step 4: Build prompt
             prompt = build_rag_prompt(chunks, query)
+            print(f"→ Generating answer with {len(chunks)} chunks...")
 
             # Step 5: Generate answer
             system_prompt = "You are a factual assistant that answers only from the provided IRS.gov knowledge snippets."
-            answer_text = self.llm_provider.generate(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                temperature=0.0,
-                max_tokens=500,
-            )
+            try:
+                answer_text = self.llm_provider.generate(
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    temperature=0.0,
+                    max_tokens=500,
+                )
+                print(f"✓ Generated answer ({len(answer_text)} chars)")
+            except Exception as gen_error:
+                print(f"❌ Generation failed: {gen_error}")
+                raise
 
-            # Step 6: Add disclaimer if needed
-            if should_add_disclaimer(query):
-                answer_text = f"{settings.legal_disclaimer}\n\n{answer_text}"
-
-            # Step 7: Format sources
+            # Step 6: Format sources
             sources = []
             similarities = []
             for chunk in chunks:
@@ -105,7 +104,7 @@ class RAGPipeline:
                 )
                 similarities.append(chunk.get("score", 0.0))
 
-            # Step 8: Determine confidence
+            # Step 7: Determine confidence
             avg_similarity = np.mean(similarities) if similarities else 0.0
             if avg_similarity >= 0.8:
                 confidence = "high"
@@ -122,7 +121,9 @@ class RAGPipeline:
             }
 
         except Exception as e:
-            logger.error(f"Error in RAG pipeline: {e}", exc_info=True)
+            print(f"❌ Pipeline error: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 "answer_text": NO_KB_MSG,
                 "sources": [],

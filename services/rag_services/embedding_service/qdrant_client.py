@@ -11,8 +11,7 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from services.rag_services.core_services.config import settings
-from services.rag_services.core_services.constants import HNSW_EF_CONSTRUCTION, HNSW_EF_SEARCH, HNSW_M
+from services.core_services import settings, HNSW_EF_CONSTRUCTION, HNSW_EF_SEARCH, HNSW_M
 
 logger = logging.getLogger(__name__)
 
