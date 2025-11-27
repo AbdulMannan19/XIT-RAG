@@ -6,8 +6,8 @@ from typing import Optional
 import fitz  # PyMuPDF
 from io import BytesIO
 
-from app.core.utils import normalize_text
-from app.ingestion.models import ContentType, CrawledPage
+from core.utils import normalize_text
+from ingestion.models import ContentType, CrawledPage
 
 logger = logging.getLogger(__name__)
 

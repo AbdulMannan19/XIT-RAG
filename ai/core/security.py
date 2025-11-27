@@ -3,7 +3,7 @@
 from fastapi import Header, HTTPException, status
 from typing import Annotated
 
-from app.core.config import settings
+from core.config import settings
 
 
 async def verify_api_key(x_api_key: Annotated[str, Header()]) -> str:
@@ -19,7 +19,7 @@ async def verify_api_key(x_api_key: Annotated[str, Header()]) -> str:
 def should_add_disclaimer(query: str) -> bool:
     """Check if query requires legal disclaimer."""
     query_lower = query.lower()
-    from app.core.constants import ADVICE_KEYWORDS
+    from core.constants import ADVICE_KEYWORDS
 
     return any(kw in query_lower for kw in ADVICE_KEYWORDS)
 

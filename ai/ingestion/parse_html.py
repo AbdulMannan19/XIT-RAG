@@ -6,8 +6,8 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from readability import Document
 
-from app.core.utils import normalize_text
-from app.ingestion.models import ContentType, CrawledPage
+from core.utils import normalize_text
+from ingestion.models import ContentType, CrawledPage
 
 logger = logging.getLogger(__name__)
 

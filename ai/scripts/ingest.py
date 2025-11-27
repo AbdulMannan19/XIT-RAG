@@ -13,20 +13,18 @@ from tqdm import tqdm
 from bs4 import BeautifulSoup
 import httpx
 
-from app.core.config import settings
-from app.core.logging import setup_logging
-from app.core.utils import compute_content_hash
-from app.ingestion.chunker import chunk_page
-from app.ingestion.crawler import create_crawler
-from app.ingestion.parse_html import parse_html
-from app.ingestion.parse_pdf import parse_pdf
-from app.ingestion.sitemap import get_seed_urls
-from app.ingestion.storage import StorageManager
-from app.vector.embeddings import get_embedding_provider
-from app.vector.qdrant_client import ensure_collection, get_client
-from app.vector.qdrant_client import get_client as get_qdrant_client
+from core.config import settings
+from core.utils import compute_content_hash
+from ingestion.chunker import chunk_page
+from ingestion.crawler import create_crawler
+from ingestion.parse_html import parse_html
+from ingestion.parse_pdf import parse_pdf
+from ingestion.sitemap import get_seed_urls
+from ingestion.storage import StorageManager
+from vector.embeddings import get_embedding_provider
+from vector.qdrant_client import ensure_collection, get_client
+from vector.qdrant_client import get_client as get_qdrant_client
 
-setup_logging()
 logger = logging.getLogger(__name__)
 
 app = typer.Typer()

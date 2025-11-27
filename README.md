@@ -6,7 +6,8 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 python.exe -m pip install --upgrade pip
-uvicorn app.api.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+
 
 git status
 git add .
@@ -18,3 +19,7 @@ git push
 Sample Queries
 
 What restrictions does Circular 230 have?
+
+Index
+Chat
+Status

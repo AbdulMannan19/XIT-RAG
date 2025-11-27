@@ -3,7 +3,7 @@
 import orjson
 from typing import Any
 
-from app.core.schemas import VectorChunk
+from core.schemas import VectorChunk
 
 
 def build_rag_prompt(chunks: list[dict[str, Any]], user_query: str) -> str:

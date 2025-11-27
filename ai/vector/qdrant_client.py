@@ -11,8 +11,8 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from app.core.config import settings
-from app.core.constants import HNSW_EF_CONSTRUCTION, HNSW_EF_SEARCH, HNSW_M
+from core.config import settings
+from core.constants import HNSW_EF_CONSTRUCTION, HNSW_EF_SEARCH, HNSW_M
 
 logger = logging.getLogger(__name__)
 

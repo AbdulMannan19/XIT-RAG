@@ -7,8 +7,8 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
-from app.core.config import settings
-from app.core.utils import is_irs_domain, normalize_url
+from core.config import settings
+from core.utils import is_irs_domain, normalize_url
 
 logger = logging.getLogger(__name__)
 

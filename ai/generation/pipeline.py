@@ -6,16 +6,16 @@ from typing import Any, Optional
 import numpy as np
 from qdrant_client import QdrantClient
 
-from app.core.config import settings
-from app.core.constants import NO_KB_MSG
-from app.core.prompts import build_no_results_prompt, build_rag_prompt
-from app.core.security import should_add_disclaimer
-from app.core.utils import estimate_tokens
-from app.generation.llm import get_llm_provider
-from app.vector.embeddings import get_embedding_provider
-from app.vector.qdrant_client import get_client
-from app.vector.reranker import get_reranker
-from app.vector.retriever import retrieve_with_cutoff
+from core.config import settings
+from core.constants import NO_KB_MSG
+from core.prompts import build_no_results_prompt, build_rag_prompt
+from core.security import should_add_disclaimer
+from core.utils import estimate_tokens
+from generation.llm import get_llm_provider
+from vector.embeddings import get_embedding_provider
+from vector.qdrant_client import get_client
+from vector.reranker import get_reranker
+from vector.retriever import retrieve_with_cutoff
 
 logger = logging.getLogger(__name__)
 

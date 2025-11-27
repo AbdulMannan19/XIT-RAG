@@ -7,13 +7,13 @@ from datetime import datetime
 from typing import Optional
 import uuid
 
-from app.core.constants import (
+from core.constants import (
     DEFAULT_CHUNK_MAX,
     DEFAULT_CHUNK_MIN,
     DEFAULT_OVERLAP_RATIO,
 )
-from app.core.utils import compute_content_hash
-from app.ingestion.models import Chunk, ContentType, CrawledPage
+from core.utils import compute_content_hash
+from ingestion.models import Chunk, ContentType, CrawledPage
 
 logger = logging.getLogger(__name__)
 

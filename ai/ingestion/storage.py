@@ -9,8 +9,8 @@ from typing import Optional
 
 import orjson
 
-from app.core.utils import compute_content_hash
-from app.ingestion.models import Chunk, CrawledPage
+from core.utils import compute_content_hash
+from ingestion.models import Chunk, CrawledPage
 
 logger = logging.getLogger(__name__)
 
