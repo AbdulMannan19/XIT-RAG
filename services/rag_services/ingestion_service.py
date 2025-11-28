@@ -1,7 +1,8 @@
 from qdrant_client.models import PointStruct
 
 from services.core_services import settings, compute_content_hash
-from services.rag_services.embedding_service import get_embedding_provider, get_client as get_qdrant_client
+from services.rag_services.embedding_service import get_embedding_provider
+from services.rag_services.qdrant_service import get_client as get_qdrant_client
 from helpers.rag_helpers import TextChunker, HtmlParser, PdfParser, StorageManager
 
 

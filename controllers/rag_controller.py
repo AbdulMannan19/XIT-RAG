@@ -10,21 +10,19 @@ from services.core_services import (
     AdminStats,
     ReindexRequest,
 )
-from services.rag_services.generation_service import RAGPipeline
-from services.rag_services.embedding_service import get_client, get_collection_info
+from services.rag_services.qdrant_service import get_client, get_collection_info
 from handlers.ingestion_handler import handle_ingestion
+from handlers.query_handler import handle_query
 
 router = APIRouter()
 
 qdrant_client = get_client()
-rag_pipeline = RAGPipeline()
 
 
-@router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest, request_obj: Request):
-    """Chat endpoint for RAG queries."""
+@router.post("/query", response_model=ChatResponse)
+async def query(request: ChatRequest, request_obj: Request):
     try:
-        result = rag_pipeline.answer(query=request.query, filters=request.filters)
+        result = handle_query(query=request.query, filters=request.filters)
 
         sources = []
         for src in result.get("sources", []):

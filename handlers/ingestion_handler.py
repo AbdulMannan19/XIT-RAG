@@ -1,7 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from services.core_services import settings
-from services.rag_services.embedding_service import get_embedding_provider, ensure_collection
+from services.rag_services.embedding_service import get_embedding_provider
+from services.rag_services.qdrant_service import ensure_collection
 from services.rag_services.ingestion_service import process_page
 from helpers.rag_helpers import WebCrawler, SitemapFetcher, StorageManager
 

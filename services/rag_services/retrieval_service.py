@@ -1,10 +1,10 @@
-"""Vector retrieval with filtering and similarity cutoff."""
-
 from typing import Any, Optional
 
 import numpy as np
+import torch
 from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from services.core_services import settings
 
@@ -17,9 +17,7 @@ def retrieve(
     cutoff: float = 0.22,
     filters: Optional[dict[str, Any]] = None,
 ) -> list[dict[str, Any]]:
-    """Retrieve similar chunks from Qdrant."""
     try:
-        # Build query filter if provided
         query_filter = None
         if filters:
             conditions = []
@@ -28,14 +26,9 @@ def retrieve(
                     conditions.append(
                         FieldCondition(key="content_type", match=MatchValue(value=value))
                     )
-                elif key == "last_modified":
-                    # Handle date filtering if needed
-                    pass
-                # Add more filter conditions as needed
             if conditions:
                 query_filter = Filter(must=conditions)
 
-        # Search
         hits = client.search(
             collection_name=collection,
             query_vector=query_vec.tolist(),
@@ -45,7 +38,6 @@ def retrieve(
             score_threshold=cutoff,
         )
 
-        # Convert to list of dicts
         results = []
         for hit in hits:
             payload = hit.payload or {}
@@ -80,21 +72,72 @@ def retrieve_with_cutoff(
     cutoff: float = None,
     filters: Optional[dict[str, Any]] = None,
 ) -> list[dict[str, Any]]:
-    """Retrieve chunks with similarity cutoff applied."""
     if top_k is None:
         top_k = settings.top_k
     if cutoff is None:
         cutoff = settings.similarity_cutoff
 
-    # First retrieve more candidates
     candidates = retrieve(client, collection, query_vec, top_k=top_k * 2, cutoff=0.0, filters=filters)
-
-    # Apply cutoff
     filtered = [c for c in candidates if c["score"] >= cutoff]
-
-    # Limit to top_k
     filtered = filtered[:top_k]
 
     return filtered
 
 
+class CrossEncoderReranker:
+    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"):
+        self.model_name = model_name
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.model = AutoModelForSequenceClassification.from_pretrained(model_name)
+            self.model.to(self.device)
+            self.model.eval()
+        except Exception as e:
+            self.model = None
+            self.tokenizer = None
+
+    def rerank(
+        self, query: str, chunks: list[dict[str, Any]], top_n: int = 3
+    ) -> list[dict[str, Any]]:
+        if not self.model or not self.tokenizer:
+            return chunks[:top_n]
+
+        try:
+            pairs = [(query, chunk.get("text", "")) for chunk in chunks]
+
+            with torch.no_grad():
+                inputs = self.tokenizer(
+                    pairs,
+                    padding=True,
+                    truncation=True,
+                    max_length=512,
+                    return_tensors="pt",
+                ).to(self.device)
+
+                scores = self.model(**inputs).logits.squeeze().cpu().tolist()
+
+            scored_chunks = list(zip(chunks, scores))
+            scored_chunks.sort(key=lambda x: x[1], reverse=True)
+
+            reranked = []
+            for chunk, score in scored_chunks[:top_n]:
+                chunk["rerank_score"] = float(score)
+                chunk["score"] = float(score)
+                reranked.append(chunk)
+
+            return reranked
+
+        except Exception as e:
+            return chunks[:top_n]
+
+
+def get_reranker(model_name: Optional[str] = None) -> Optional[CrossEncoderReranker]:
+    if model_name is None:
+        model_name = "cross-encoder/ms-marco-MiniLM-L-12-v2"
+
+    try:
+        return CrossEncoderReranker(model_name)
+    except Exception as e:
+        return None
