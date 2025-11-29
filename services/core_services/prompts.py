@@ -17,7 +17,7 @@ def build_rag_prompt(chunks: list[dict[str, Any]], user_query: str) -> str:
             "section_heading": chunk.get("section_heading"),
             "char_start": chunk.get("char_start", 0),
             "char_end": chunk.get("char_end", 0),
-            "excerpt": chunk.get("text", "")[:500],
+            "excerpt": chunk.get("text", "")[:300],
         }
         ctx_lines.append(orjson.dumps(ctx_obj).decode("utf-8"))
 

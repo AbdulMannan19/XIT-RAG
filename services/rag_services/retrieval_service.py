@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import torch
@@ -77,15 +78,11 @@ def retrieve_with_cutoff(
     if cutoff is None:
         cutoff = settings.similarity_cutoff
 
-    candidates = retrieve(client, collection, query_vec, top_k=top_k * 2, cutoff=0.0, filters=filters)
-    filtered = [c for c in candidates if c["score"] >= cutoff]
-    filtered = filtered[:top_k]
-
-    return filtered
+    return retrieve(client, collection, query_vec, top_k=top_k, cutoff=cutoff, filters=filters)
 
 
 class CrossEncoderReranker:
-    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2"):
+    def __init__(self, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
         self.model_name = model_name
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -116,7 +113,8 @@ class CrossEncoderReranker:
                     return_tensors="pt",
                 ).to(self.device)
 
-                scores = self.model(**inputs).logits.squeeze().cpu().tolist()
+                logits = self.model(**inputs).logits.squeeze().cpu()
+                scores = logits.tolist() if len(chunks) > 1 else [logits.item()]
 
             scored_chunks = list(zip(chunks, scores))
             scored_chunks.sort(key=lambda x: x[1], reverse=True)
@@ -133,11 +131,123 @@ class CrossEncoderReranker:
             return chunks[:top_n]
 
 
+class ParallelCrossEncoderReranker:
+    def __init__(
+        self,
+        base_reranker: CrossEncoderReranker,
+        batch_size: int = 8,
+        max_workers: int = 3,
+    ):
+        self.base_reranker = base_reranker
+        self.batch_size = batch_size
+        self.max_workers = max_workers
+
+    def _process_batch(self, query: str, batch: list[dict[str, Any]]) -> list[tuple[dict[str, Any], float]]:
+        if not self.base_reranker.model or not self.base_reranker.tokenizer:
+            return [(chunk, 0.0) for chunk in batch]
+
+        try:
+            pairs = [(query, chunk.get("text", "")) for chunk in batch]
+
+            with torch.no_grad():
+                inputs = self.base_reranker.tokenizer(
+                    pairs,
+                    padding=True,
+                    truncation=True,
+                    max_length=512,
+                    return_tensors="pt",
+                ).to(self.base_reranker.device)
+
+                logits = self.base_reranker.model(**inputs).logits.squeeze().cpu()
+                scores = logits.tolist() if len(batch) > 1 else [logits.item()]
+
+            return list(zip(batch, scores))
+
+        except Exception as e:
+            return [(chunk, 0.0) for chunk in batch]
+
+    def rerank(
+        self, query: str, chunks: list[dict[str, Any]], top_n: int = 3
+    ) -> list[dict[str, Any]]:
+        if not self.base_reranker.model or not self.base_reranker.tokenizer:
+            return chunks[:top_n]
+
+        try:
+            batches = [
+                chunks[i : i + self.batch_size]
+                for i in range(0, len(chunks), self.batch_size)
+            ]
+
+            all_scored = []
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = [
+                    executor.submit(self._process_batch, query, batch)
+                    for batch in batches
+                ]
+                for future in futures:
+                    batch_results = future.result()
+                    all_scored.extend(batch_results)
+
+            all_scored.sort(key=lambda x: x[1], reverse=True)
+
+            reranked = []
+            for chunk, score in all_scored[:top_n]:
+                chunk["rerank_score"] = float(score)
+                chunk["score"] = float(score)
+                reranked.append(chunk)
+
+            return reranked
+
+        except Exception as e:
+            return chunks[:top_n]
+
+
+_reranker_cache: Optional[CrossEncoderReranker] = None
+_parallel_reranker_cache: Optional[ParallelCrossEncoderReranker] = None
+
+
 def get_reranker(model_name: Optional[str] = None) -> Optional[CrossEncoderReranker]:
+    global _reranker_cache
+    
+    if not settings.enable_reranking:
+        return None
+    
+    if _reranker_cache is not None:
+        return _reranker_cache
+    
     if model_name is None:
-        model_name = "cross-encoder/ms-marco-MiniLM-L-12-v2"
+        model_name = settings.reranker_model
 
     try:
-        return CrossEncoderReranker(model_name)
+        _reranker_cache = CrossEncoderReranker(model_name)
+        return _reranker_cache
+    except Exception as e:
+        return None
+
+
+def get_parallel_reranker(
+    base_reranker: Optional[CrossEncoderReranker] = None,
+    batch_size: int = 8,
+    max_workers: int = 3,
+) -> Optional[ParallelCrossEncoderReranker]:
+    global _parallel_reranker_cache
+    
+    if not settings.enable_reranking:
+        return None
+    
+    if _parallel_reranker_cache is not None:
+        return _parallel_reranker_cache
+    
+    if base_reranker is None:
+        base_reranker = get_reranker()
+    
+    if base_reranker is None:
+        return None
+    
+    try:
+        _parallel_reranker_cache = ParallelCrossEncoderReranker(
+            base_reranker, batch_size=batch_size, max_workers=max_workers
+        )
+        return _parallel_reranker_cache
     except Exception as e:
         return None

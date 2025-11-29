@@ -52,8 +52,10 @@ class Settings(BaseSettings):
 
     # Retrieval
     similarity_cutoff: float = 0.22
-    top_k: int = 40
+    top_k: int = 20
     top_n: int = 3
+    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    enable_reranking: bool = True
 
     # Legal
     legal_disclaimer: str = (

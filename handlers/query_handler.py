@@ -1,20 +1,40 @@
+import time
+from functools import lru_cache
+
 from services.core_services import settings, NO_KB_MSG, build_rag_prompt
 from services.rag_services.llm_service import get_llm
 from services.rag_services.embedding_service import get_embedding_provider
 from services.rag_services.qdrant_service import get_client
-from services.rag_services.retrieval_service import get_reranker, retrieve_with_cutoff
+from services.rag_services.retrieval_service import get_parallel_reranker, retrieve_with_cutoff
 import numpy as np
 
 
+_response_cache = {}
+_cache_ttl = 3600
+
+
+def _get_cache_key(query: str, filters: dict = None, top_k: int = None, top_n: int = None, cutoff: float = None) -> str:
+    filters_str = str(sorted(filters.items())) if filters else "none"
+    return f"{query}|{filters_str}|{top_k}|{top_n}|{cutoff}"
+
+
 def handle_query(query: str, filters: dict = None, top_k: int = None, top_n: int = None, cutoff: float = None) -> dict:
+    cache_key = _get_cache_key(query, filters, top_k, top_n, cutoff)
+    if cache_key in _response_cache:
+        cached_response, cached_time = _response_cache[cache_key]
+        if time.time() - cached_time < _cache_ttl:
+            print(f"✓ Cache hit for query: {query[:50]}...")
+            return cached_response
+
     try:
         embedding_provider = get_embedding_provider()
         llm = get_llm()
         qdrant_client = get_client()
-        reranker = get_reranker()
+        reranker = get_parallel_reranker(batch_size=8, max_workers=3)
         collection_name = settings.collection_name
 
-        query_embedding = embedding_provider.get_embedding(query)
+        query_embedding_tuple = embedding_provider.get_embedding_cached(query)
+        query_embedding = np.array(query_embedding_tuple)
 
         top_k = top_k or settings.top_k
         top_n = top_n or settings.top_n
@@ -41,7 +61,7 @@ def handle_query(query: str, filters: dict = None, top_k: int = None, top_n: int
         scores = [f"{c.get('score', 0):.3f}" for c in chunks[:3]]
         print(f"✓ Retrieved {len(chunks)} chunks (scores: {scores}...)")
 
-        if reranker and len(chunks) > top_n:
+        if reranker and len(chunks) >= 10 and len(chunks) > top_n:
             print(f"⟳ Reranking {len(chunks)} → {top_n} chunks...")
             chunks = reranker.rerank(query, chunks, top_n=top_n)
             reranked_scores = [f"{c.get('score', 0):.3f}" for c in chunks[:3]]
@@ -59,7 +79,7 @@ def handle_query(query: str, filters: dict = None, top_k: int = None, top_n: int
                 prompt=prompt,
                 system_prompt=system_prompt,
                 temperature=0.0,
-                max_tokens=500,
+                max_tokens=200,
             )
             print(f"✓ Generated answer ({len(answer_text)} chars)")
         except Exception as gen_error:
@@ -90,12 +110,15 @@ def handle_query(query: str, filters: dict = None, top_k: int = None, top_n: int
         else:
             confidence = "low"
 
-        return {
+        result = {
             "answer_text": answer_text,
             "sources": sources,
             "confidence": confidence,
             "query_embedding_similarity": similarities,
         }
+
+        _response_cache[cache_key] = (result, time.time())
+        return result
 
     except Exception as e:
         print(f"❌ Query handler error: {e}")

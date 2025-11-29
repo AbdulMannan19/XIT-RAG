@@ -8,6 +8,18 @@ class OllamaLLM:
     def __init__(self):
         self.client = httpx.Client(base_url=settings.ollama_host, timeout=120.0)
         self.model_name = settings.ollama_model
+        self._warmup()
+
+    def _warmup(self):
+        """Warm up the model with a tiny generation to avoid cold start."""
+        try:
+            self.generate(
+                prompt="Say: OK",
+                system_prompt="Respond briefly.",
+                max_tokens=3,
+            )
+        except Exception:
+            pass
 
     def generate(self, prompt: str, system_prompt: Optional[str] = None, **kwargs: Any) -> str:
         try:
@@ -35,5 +47,11 @@ class OllamaLLM:
             raise
 
 
+_llm_cache = None
+
+
 def get_llm() -> OllamaLLM:
-    return OllamaLLM()
+    global _llm_cache
+    if _llm_cache is None:
+        _llm_cache = OllamaLLM()
+    return _llm_cache
