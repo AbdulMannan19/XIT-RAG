@@ -1,13 +1,11 @@
 from fastapi import APIRouter, HTTPException, status
 
-from models import ChatRequest, ChatResponse, Source, AdminStats
+from models import ChatRequest, ChatResponse, Source, AdminStats, IngestionRequest
 from handlers import (
     get_query_handler,
     get_ingestion_handler,
     get_stats_handler,
 )
-
-CRAWL_BASE = "https://www.irs.gov"
 
 router = APIRouter()
 
@@ -58,15 +56,10 @@ async def get_stats():
 
 
 @router.post("/ingest")
-async def trigger_ingest(
-    seed_url: str = CRAWL_BASE,
-    max_pages: int = 100,
-    concurrency: int = 2,
-):
-
+async def trigger_ingest(request: IngestionRequest):
     try:
         handler = get_ingestion_handler()
-        return handler.handle_ingestion(seed_url, max_pages, concurrency)
+        return handler.handle_ingestion(request)
 
     except Exception as e:
         raise HTTPException(

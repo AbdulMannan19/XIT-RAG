@@ -7,6 +7,7 @@ from .chunk import Chunk
 from .chunk_metadata import ChunkMetadata
 from .content_type import ContentType
 from .crawled_page import CrawledPage
+from .ingestion_request import IngestionRequest
 from .reindex_request import ReindexRequest
 from .source import Source
 from .vector_chunk import VectorChunk
@@ -19,6 +20,7 @@ __all__ = [
     "ChunkMetadata",
     "ContentType",
     "CrawledPage",
+    "IngestionRequest",
     "ReindexRequest",
     "Source",
     "VectorChunk",
