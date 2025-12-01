@@ -1,11 +1,25 @@
 """Models package - Data structures."""
 
+from .admin_stats import AdminStats
+from .chat_request import ChatRequest
+from .chat_response import ChatResponse
+from .chunk import Chunk
+from .chunk_metadata import ChunkMetadata
 from .content_type import ContentType
 from .crawled_page import CrawledPage
-from .chunk import Chunk
+from .reindex_request import ReindexRequest
+from .source import Source
+from .vector_chunk import VectorChunk
 
 __all__ = [
+    "AdminStats",
+    "ChatRequest",
+    "ChatResponse",
+    "Chunk",
+    "ChunkMetadata",
     "ContentType",
     "CrawledPage",
-    "Chunk",
+    "ReindexRequest",
+    "Source",
+    "VectorChunk",
 ]

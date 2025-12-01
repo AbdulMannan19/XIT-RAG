@@ -1,7 +1,9 @@
 import re
 from typing import Optional
 
-from services.core_services import DEFAULT_CHUNK_MAX, DEFAULT_CHUNK_MIN, DEFAULT_OVERLAP_RATIO
+DEFAULT_CHUNK_MIN = 800
+DEFAULT_CHUNK_MAX = 1600
+DEFAULT_OVERLAP_RATIO = 0.25
 
 
 def detect_sections(text: str) -> list[dict[str, int]]:

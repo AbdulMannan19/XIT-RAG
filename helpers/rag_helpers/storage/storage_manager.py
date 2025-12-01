@@ -4,7 +4,7 @@ from pathlib import Path
 import orjson
 
 from models import Chunk, CrawledPage
-from services.core_services import compute_content_hash
+from utils import compute_content_hash
 
 
 class StorageManager:

@@ -7,7 +7,11 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Filter, FieldCondition, MatchValue
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from services.core_services import settings
+SIMILARITY_CUTOFF = 0.22
+TOP_K = 20
+TOP_N = 3
+RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+ENABLE_RERANKING = True
 
 
 class RetrievalService:
@@ -77,9 +81,9 @@ class RetrievalService:
         filters: Optional[dict[str, Any]] = None,
     ) -> list[dict[str, Any]]:
         if top_k is None:
-            top_k = settings.top_k
+            top_k = TOP_K
         if cutoff is None:
-            cutoff = settings.similarity_cutoff
+            cutoff = SIMILARITY_CUTOFF
 
         return self.retrieve(collection, query_vec, top_k=top_k, cutoff=cutoff, filters=filters)
 
@@ -235,14 +239,14 @@ def retrieve_with_cutoff(
 def get_reranker(model_name: Optional[str] = None) -> Optional[CrossEncoderReranker]:
     global _reranker_cache
     
-    if not settings.enable_reranking:
+    if not ENABLE_RERANKING:
         return None
     
     if _reranker_cache is not None:
         return _reranker_cache
     
     if model_name is None:
-        model_name = settings.reranker_model
+        model_name = RERANKER_MODEL
 
     try:
         _reranker_cache = CrossEncoderReranker(model_name)
@@ -258,7 +262,7 @@ def get_parallel_reranker(
 ) -> Optional[ParallelCrossEncoderReranker]:
     global _parallel_reranker_cache
     
-    if not settings.enable_reranking:
+    if not ENABLE_RERANKING:
         return None
     
     if _parallel_reranker_cache is not None:

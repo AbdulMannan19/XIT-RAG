@@ -3,7 +3,7 @@ from xml.etree import ElementTree as ET
 
 import httpx
 
-from services.core_services import is_irs_domain, normalize_url
+from utils import is_irs_domain, normalize_url
 
 
 def parse_sitemap_xml(sitemap_url: str, max_urls: Optional[int] = None) -> Iterator[str]:

@@ -1,10 +1,12 @@
 from qdrant_client import QdrantClient
 from qdrant_client.models import PointStruct
 
-from services.core_services import settings, compute_content_hash
 from services.rag_services.embedding_service import get_embedding_provider
+from utils import compute_content_hash
 from services.rag_services.qdrant_service import get_client as get_qdrant_client
-from helpers.rag_helpers import TextChunker, HtmlParser, PdfParser, StorageManager
+from helpers.rag_helpers import chunk_page, HtmlParser, PdfParser, StorageManager
+
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 class IngestionService:
@@ -13,7 +15,6 @@ class IngestionService:
         self.embedding_provider = get_embedding_provider()
         self.html_parser = HtmlParser()
         self.pdf_parser = PdfParser()
-        self.text_chunker = TextChunker()
 
     def upsert_chunks_to_qdrant(self, chunks: list, embeddings: list, collection_name: str):
         points = []
@@ -31,7 +32,7 @@ class IngestionService:
                     "content_type": chunk.content_type.value,
                     "crawl_ts": chunk.crawl_timestamp.isoformat(),
                     "language": "en",
-                    "embedding_model": settings.openai_embed_model if settings.embeddings_provider == "openai" else "local",
+                    "embedding_model": EMBEDDING_MODEL,
                     "tokens": len(chunk.chunk_text) // 4,
                     "hash": compute_content_hash(chunk.chunk_text),
                 },
@@ -56,7 +57,7 @@ class IngestionService:
 
             storage.save_cleaned_page(page)
 
-            chunks = self.text_chunker.chunk(page)
+            chunks = chunk_page(page)
             if not chunks:
                 return None
 
@@ -84,6 +85,5 @@ def get_ingestion_service() -> IngestionService:
 
 
 def process_page(url: str, crawler, storage: StorageManager, collection_name: str):
-    """Backward compatibility wrapper."""
     service = get_ingestion_service()
     return service.process_page(url, crawler, storage, collection_name)

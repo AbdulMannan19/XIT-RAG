@@ -3,11 +3,13 @@ from typing import Optional
 
 import numpy as np
 
-from services.core_services import settings, NO_KB_MSG, build_rag_prompt
-from services.rag_services.llm_service import get_llm
+from services.rag_services.llm_service import get_llm, build_rag_prompt
 from services.rag_services.embedding_service import get_embedding_provider
 from services.rag_services.qdrant_service import get_client
-from services.rag_services.retrieval_service import get_parallel_reranker, retrieve_with_cutoff
+from services.rag_services.retrieval_service import get_parallel_reranker, retrieve_with_cutoff, TOP_K, TOP_N, SIMILARITY_CUTOFF
+
+COLLECTION_NAME = "irs_rag_v1"
+NO_KB_MSG = "I don't have verifiable information in the knowledge base for that query."
 
 
 class QueryHandler:
@@ -16,7 +18,7 @@ class QueryHandler:
         self.llm = get_llm()
         self.qdrant_client = get_client()
         self.reranker = get_parallel_reranker(batch_size=8, max_workers=3)
-        self.collection_name = settings.collection_name
+        self.collection_name = COLLECTION_NAME
         self._response_cache = {}
         self._cache_ttl = cache_ttl
 
@@ -50,9 +52,9 @@ class QueryHandler:
             query_embedding_tuple = self.embedding_provider.get_embedding_cached(query)
             query_embedding = np.array(query_embedding_tuple)
 
-            top_k = top_k or settings.top_k
-            top_n = top_n or settings.top_n
-            cutoff = cutoff or settings.similarity_cutoff
+            top_k = top_k or TOP_K
+            top_n = top_n or TOP_N
+            cutoff = cutoff or SIMILARITY_CUTOFF
 
             chunks = retrieve_with_cutoff(
                 self.qdrant_client,

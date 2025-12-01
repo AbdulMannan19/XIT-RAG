@@ -4,7 +4,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 
 
-class LocalEmbedding:
+class EmbeddingService:
     def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
         self.model_name = model_name
         self.model = SentenceTransformer(model_name)
@@ -38,8 +38,8 @@ class LocalEmbedding:
 _embedding_provider_cache = None
 
 
-def get_embedding_provider() -> LocalEmbedding:
+def get_embedding_provider() -> EmbeddingService:
     global _embedding_provider_cache
     if _embedding_provider_cache is None:
-        _embedding_provider_cache = LocalEmbedding()
+        _embedding_provider_cache = EmbeddingService()
     return _embedding_provider_cache

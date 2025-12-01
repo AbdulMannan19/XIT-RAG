@@ -3,25 +3,27 @@ from typing import Optional
 
 from qdrant_client import QdrantClient
 
-from services.core_services import settings
 from services.rag_services.embedding_service import get_embedding_provider
 from services.rag_services.qdrant_service import ensure_collection, get_client
 from services.rag_services.ingestion_service import process_page
 from helpers.rag_helpers import WebCrawler, SitemapFetcher, StorageManager
+
+COLLECTION_NAME = "irs_rag_v1"
+RATE_LIMIT_RPS = 0.5
 
 
 class IngestionHandler:
     def __init__(self, qdrant_client: Optional[QdrantClient] = None):
         self.qdrant_client = qdrant_client or get_client()
         self.embedding_provider = get_embedding_provider()
-        self.collection_name = settings.collection_name
+        self.collection_name = COLLECTION_NAME
         self.storage = StorageManager()
 
     def handle_ingestion(
         self, seed_url: str, max_pages: int, concurrency: int
     ) -> dict:
         crawler = WebCrawler(
-            base_url=seed_url, rate_limit_rps=settings.rate_limit_rps
+            base_url=seed_url, rate_limit_rps=RATE_LIMIT_RPS
         )
         crawler._check_robots_txt()
 

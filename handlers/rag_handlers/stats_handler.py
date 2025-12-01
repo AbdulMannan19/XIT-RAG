@@ -1,22 +1,20 @@
 from datetime import datetime
-
-from services.core_services import settings, AdminStats
+from models import AdminStats
 from services.rag_services.qdrant_service import get_qdrant_service
+
+COLLECTION_NAME = "irs_rag_v1"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 class StatsHandler:
     def __init__(self):
         self.qdrant_service = get_qdrant_service()
-        self.collection_name = settings.collection_name
+        self.collection_name = COLLECTION_NAME
 
     def handle_stats(self) -> AdminStats:
         info = self.qdrant_service.get_collection_info(self.collection_name)
 
-        embedding_model = (
-            settings.openai_embed_model
-            if settings.embeddings_provider == "openai"
-            else "local"
-        )
+        embedding_model = EMBEDDING_MODEL
 
         stats = AdminStats(
             collection_name=self.collection_name,

@@ -6,7 +6,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .crawler_helpers import check_robots_txt, can_fetch_url, apply_rate_limit
 from models import ContentType, CrawledPage
-from services.core_services import is_irs_domain, normalize_url
+from utils import is_irs_domain, normalize_url
 
 
 class WebCrawler:

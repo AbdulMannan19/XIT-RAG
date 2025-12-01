@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from qdrant_client import QdrantClient
@@ -8,13 +9,19 @@ from qdrant_client.models import (
     VectorParams,
 )
 
-from services.core_services import settings, HNSW_EF_CONSTRUCTION, HNSW_M
+# Qdrant Configuration (secrets from environment)
+QDRANT_URL = os.getenv("QDRANT_URL")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
+# Vector DB defaults
+HNSW_M = 64
+HNSW_EF_CONSTRUCTION = 128
 
 
 class QdrantService:
     def __init__(self, url: Optional[str] = None, api_key: Optional[str] = None):
-        self.url = url or settings.qdrant_url
-        self.api_key = api_key or settings.qdrant_api_key or None
+        self.url = url or QDRANT_URL
+        self.api_key = api_key or QDRANT_API_KEY or None
         self.client = QdrantClient(url=self.url, api_key=self.api_key)
 
     def ensure_collection(self, collection: str, vector_size: int) -> None:

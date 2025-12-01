@@ -1,3 +1,3 @@
-from .text_chunker import TextChunker
+from .text_chunker import chunk_page
 
-__all__ = ["TextChunker"]
+__all__ = ["chunk_page"]

@@ -1,20 +1,16 @@
 from fastapi import APIRouter, HTTPException, status
 
-from services.core_services import (
-    settings,
-    ChatRequest,
-    ChatResponse,
-    Source,
-    AdminStats,
-)
+from models import ChatRequest, ChatResponse, Source, AdminStats
 from handlers.rag_handlers import (
     get_query_handler,
     get_ingestion_handler,
     get_stats_handler,
 )
 
-router = APIRouter()
+# Configuration
+CRAWL_BASE = "https://www.irs.gov"
 
+router = APIRouter()
 
 @router.post("/query", response_model=ChatResponse)
 async def query(request: ChatRequest):
@@ -64,7 +60,7 @@ async def get_stats():
 
 @router.post("/ingest")
 async def trigger_ingest(
-    seed_url: str = settings.crawl_base,
+    seed_url: str = CRAWL_BASE,
     max_pages: int = 100,
     concurrency: int = 2,
 ):
