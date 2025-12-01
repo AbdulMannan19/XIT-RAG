@@ -13,9 +13,11 @@ pydantic-settings==2.1.0
 
 qdrant-client==1.11.3
 
+torch==2.5.1
+torchvision==0.20.1
+torchaudio==2.5.1
 sentence-transformers==2.3.1
 transformers==4.37.2
-torch==2.2.0+cu121
 numpy==1.26.4
 safetensors==0.4.2
 
@@ -31,4 +33,6 @@ tqdm==4.66.2
 aiofiles==23.2.1
 
 slowapi==0.1.9
+
+--extra-index-url https://download.pytorch.org/whl/cu121
 
