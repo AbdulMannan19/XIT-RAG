@@ -1,20 +1,19 @@
 from fastapi import APIRouter, HTTPException, status
 
 from models import ChatRequest, ChatResponse, Source, AdminStats
-from handlers.rag_handlers import (
+from handlers import (
     get_query_handler,
     get_ingestion_handler,
     get_stats_handler,
 )
 
-# Configuration
 CRAWL_BASE = "https://www.irs.gov"
 
 router = APIRouter()
 
 @router.post("/query", response_model=ChatResponse)
 async def query(request: ChatRequest):
-    """Handle RAG query requests."""
+    
     try:
         handler = get_query_handler()
         result = handler.handle_query(query=request.query, filters=request.filters)
@@ -64,7 +63,7 @@ async def trigger_ingest(
     max_pages: int = 100,
     concurrency: int = 2,
 ):
-    """Trigger ingestion of pages from seed URL."""
+
     try:
         handler = get_ingestion_handler()
         return handler.handle_ingestion(seed_url, max_pages, concurrency)

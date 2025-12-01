@@ -8,12 +8,10 @@ from qdrant_client.models import (
     OptimizersConfigDiff,
     VectorParams,
 )
-
-# Qdrant Configuration (secrets from environment)
+ 
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 
-# Vector DB defaults
 HNSW_M = 64
 HNSW_EF_CONSTRUCTION = 128
 
