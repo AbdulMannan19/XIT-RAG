@@ -3,7 +3,7 @@ from readability import Document
 
 from helpers.rag_helpers import extract_title
 from models import CrawledPage
-from services.core_services import normalize_text
+from utils import normalize_text
 
 
 class HtmlParser:

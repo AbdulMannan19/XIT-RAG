@@ -13,7 +13,6 @@ class StatsHandler:
 
     def handle_stats(self) -> AdminStats:
         info = self.qdrant_service.get_collection_info(self.collection_name)
-
         embedding_model = EMBEDDING_MODEL
 
         stats = AdminStats(

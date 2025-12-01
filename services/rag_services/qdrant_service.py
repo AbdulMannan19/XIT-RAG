@@ -54,16 +54,13 @@ class QdrantService:
             pass
 
     def get_collection_info(self, collection: str) -> dict:
-        try:
-            info = self.client.get_collection(collection)
-            return {
-                "name": collection,
-                "vector_size": info.config.params.vectors.size,
-                "points_count": info.points_count,
-                "status": info.status,
-            }
-        except Exception as e:
-            return {}
+        info = self.client.get_collection(collection)
+        return {
+            "name": collection,
+            "vector_size": info.config.params.vectors.size,
+            "points_count": info.points_count,
+            "status": info.status,
+        }
 
     def delete_collection(self, collection: str) -> None:
         try:

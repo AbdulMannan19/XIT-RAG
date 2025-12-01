@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 
-from services.core_services import normalize_text
+from utils import normalize_text
 
 
 def extract_title(html: str) -> str:

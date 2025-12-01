@@ -5,6 +5,9 @@ warnings.filterwarnings("ignore", message=".*XMLParsedAsHTMLWarning.*")
 warnings.filterwarnings("ignore", message=".*resume_download.*")
 warnings.filterwarnings("ignore", message=".*shadows an attribute.*")
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
