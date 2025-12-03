@@ -1,5 +1,5 @@
-from helpers.rag_helpers import extract_pdf_text
 from models import CrawledPage
+from helpers.rag_helpers.extractors import extract_pdf_text
 
 
 class PdfParser:

@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, HttpUrl
 
-from models.content_type import ContentType
+from models.rag_models.content_type import ContentType
 
 
 class Chunk(BaseModel):

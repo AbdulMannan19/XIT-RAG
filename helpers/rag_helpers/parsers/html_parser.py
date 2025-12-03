@@ -1,9 +1,9 @@
 from bs4 import BeautifulSoup
 from readability import Document
 
-from helpers.rag_helpers import extract_title
 from models import CrawledPage
 from utils import normalize_text
+from helpers.rag_helpers.extractors import extract_title
 
 
 class HtmlParser:

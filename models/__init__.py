@@ -1,27 +1,30 @@
 """Models package - Data structures."""
 
-from .admin_stats import AdminStats
-from .chat_request import ChatRequest
-from .chat_response import ChatResponse
-from .chunk import Chunk
-from .chunk_metadata import ChunkMetadata
-from .content_type import ContentType
-from .crawled_page import CrawledPage
-from .ingestion_request import IngestionRequest
-from .reindex_request import ReindexRequest
-from .source import Source
-from .vector_chunk import VectorChunk
+from .rag_models import (
+    Chunk,
+    ChunkMetadata,
+    ContentType,
+    CrawledPage,
+    VectorChunk,
+    ChatRequest,
+    IngestionRequest,
+    ReindexRequest,
+    ChatResponse,
+    AdminStats,
+    Source,
+)
 
 __all__ = [
-    "AdminStats",
-    "ChatRequest",
-    "ChatResponse",
     "Chunk",
     "ChunkMetadata",
     "ContentType",
     "CrawledPage",
+    "VectorChunk",
+    "ChatRequest",
     "IngestionRequest",
     "ReindexRequest",
+    "ChatResponse",
+    "AdminStats",
     "Source",
-    "VectorChunk",
 ]
+

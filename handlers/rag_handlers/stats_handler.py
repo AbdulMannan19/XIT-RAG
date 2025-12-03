@@ -1,14 +1,13 @@
 from datetime import datetime
 from models import AdminStats
-from services.rag_services.qdrant_service import get_qdrant_service
 
 COLLECTION_NAME = "irs_rag_v1"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 class StatsHandler:
-    def __init__(self):
-        self.qdrant_service = get_qdrant_service()
+    def __init__(self, qdrant_service):
+        self.qdrant_service = qdrant_service
         self.collection_name = COLLECTION_NAME
 
     def handle_stats(self) -> AdminStats:
@@ -24,12 +23,3 @@ class StatsHandler:
         )
         return stats
 
-
-_stats_handler_instance = None
-
-
-def get_stats_handler() -> StatsHandler:
-    global _stats_handler_instance
-    if _stats_handler_instance is None:
-        _stats_handler_instance = StatsHandler()
-    return _stats_handler_instance

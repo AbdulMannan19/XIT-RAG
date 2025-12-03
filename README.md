@@ -13,10 +13,14 @@ git config user.name "AbdulMannan19"
 git commit -m "quick commit"
 git push
 
-Sample Queries
 
-What restrictions does Circular 230 have?
+Controllers - Handling HTTP Requests
+Services - Core functions of the business logic 
+Handlers - Orchestrating those functions to perform the API call
+Models - Request, response and other schemas
+Helpers - Helper functions for the Services folder (domain specific delegated logic)
+Utils - Cross Cutting simple functions used accross different domains
 
-Index
-Chat
-Status
+All constants in respective files on the top of the code
+env file only has private/secret variables like qdrant url adn API key (Ollama url of VM must also be added)
+

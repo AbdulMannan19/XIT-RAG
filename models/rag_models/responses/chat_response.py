@@ -1,14 +1,10 @@
-"""Chat response model."""
-
 from typing import Literal
-
 from pydantic import BaseModel, Field
-
-from models.source import Source
+from models.rag_models.responses.source import Source
 
 
 class ChatResponse(BaseModel):
-    """Chat response schema."""
+
 
     answer_text: str
     sources: list[Source]

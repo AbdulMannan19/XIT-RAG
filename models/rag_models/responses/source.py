@@ -1,12 +1,9 @@
-"""Source citation model."""
-
 from typing import Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
 
 class Source(BaseModel):
-    """Source citation schema."""
 
     url: HttpUrl
     title: str

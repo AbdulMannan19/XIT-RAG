@@ -1,37 +1,25 @@
-import time
 from typing import Optional
 
 import numpy as np
 
-from services.rag_services.llm_service import get_llm, build_rag_prompt
-from services.rag_services.embedding_service import get_embedding_provider
-from services.rag_services.qdrant_service import get_client
-from services.rag_services.retrieval_service import get_parallel_reranker, retrieve_with_cutoff, TOP_K, TOP_N, SIMILARITY_CUTOFF
+from models import ChatResponse, Source
+from services.rag_services.retrieval_service import TOP_K, TOP_N, SIMILARITY_CUTOFF
 
 COLLECTION_NAME = "irs_rag_v1"
 NO_KB_MSG = "I don't have verifiable information in the knowledge base for that query."
 
 
 class QueryHandler:
-    def __init__(self, cache_ttl: int = 3600):
-        self.embedding_provider = get_embedding_provider()
-        self.llm = get_llm()
-        self.qdrant_client = get_client()
-        self.reranker = get_parallel_reranker(batch_size=8, max_workers=3)
-        self.collection_name = COLLECTION_NAME
-        self._response_cache = {}
-        self._cache_ttl = cache_ttl
-
-    def _get_cache_key(
+    def __init__(
         self,
-        query: str,
-        filters: Optional[dict] = None,
-        top_k: Optional[int] = None,
-        top_n: Optional[int] = None,
-        cutoff: Optional[float] = None,
-    ) -> str:
-        filters_str = str(sorted(filters.items())) if filters else "none"
-        return f"{query}|{filters_str}|{top_k}|{top_n}|{cutoff}"
+        embedding_service,
+        llm_service,
+        retrieval_service,
+    ):
+        self.embedding_provider = embedding_service
+        self.llm = llm_service
+        self.retrieval_service = retrieval_service
+        self.collection_name = COLLECTION_NAME
 
     def handle_query(
         self,
@@ -40,67 +28,40 @@ class QueryHandler:
         top_k: Optional[int] = None,
         top_n: Optional[int] = None,
         cutoff: Optional[float] = None,
-    ) -> dict:
-        cache_key = self._get_cache_key(query, filters, top_k, top_n, cutoff)
-        if cache_key in self._response_cache:
-            cached_response, cached_time = self._response_cache[cache_key]
-            if time.time() - cached_time < self._cache_ttl:
-                print(f"✓ Cache hit for query: {query[:50]}...")
-                return cached_response
-
+    ):
         try:
-            query_embedding_tuple = self.embedding_provider.get_embedding_cached(query)
-            query_embedding = np.array(query_embedding_tuple)
+            print(f"[QUERY] Embedding query...")
+            query_embedding = self.embedding_provider.get_embedding(query)
 
             top_k = top_k or TOP_K
             top_n = top_n or TOP_N
             cutoff = cutoff or SIMILARITY_CUTOFF
 
-            chunks = retrieve_with_cutoff(
-                self.qdrant_client,
+            chunks = self.retrieval_service.retrieve(
                 self.collection_name,
                 query_embedding,
-                top_k=top_k,
-                cutoff=cutoff,
-                filters=filters,
+                top_k,
+                cutoff,
+                filters,
             )
+            print(f"[QUERY] Retrieved {len(chunks)} chunks")
 
             if not chunks:
-                print(f"❌ No chunks retrieved for query: {query[:50]}...")
-                return {
-                    "answer_text": NO_KB_MSG,
-                    "sources": [],
-                    "confidence": "low",
-                    "query_embedding_similarity": [],
-                }
+                return ChatResponse(
+                    answer_text=NO_KB_MSG,
+                    sources=[],
+                    confidence="low",
+                    query_embedding_similarity=[],
+                )
 
-            scores = [f"{c.get('score', 0):.3f}" for c in chunks[:3]]
-            print(f"✓ Retrieved {len(chunks)} chunks (scores: {scores}...)")
-
-            if self.reranker and len(chunks) >= 10 and len(chunks) > top_n:
-                print(f"⟳ Reranking {len(chunks)} → {top_n} chunks...")
-                chunks = self.reranker.rerank(query, chunks, top_n=top_n)
-                reranked_scores = [f"{c.get('score', 0):.3f}" for c in chunks[:3]]
-                print(f"✓ Reranked (new scores: {reranked_scores}...)")
+            if len(chunks) > top_n:
+                chunks = self.retrieval_service.rerank(query, chunks, top_n)
             else:
                 chunks = chunks[:top_n]
-                print(f"→ Using top {len(chunks)} chunks (no reranking)")
 
-            prompt = build_rag_prompt(chunks, query)
-            print(f"→ Generating answer with {len(chunks)} chunks...")
-
-            system_prompt = "You are a factual assistant that answers only from the provided IRS.gov knowledge snippets."
-            try:
-                answer_text = self.llm.generate(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
-                    temperature=0.0,
-                    max_tokens=200,
-                )
-                print(f"✓ Generated answer ({len(answer_text)} chars)")
-            except Exception as gen_error:
-                print(f"❌ Generation failed: {gen_error}")
-                raise
+            prompt = self.llm.build_rag_prompt(chunks, query)
+            answer_text = self.llm.generate(prompt, temperature=0.0, max_tokens=200)
+            print(f"[QUERY] Answer generated")
 
             sources = []
             similarities = []
@@ -126,34 +87,36 @@ class QueryHandler:
             else:
                 confidence = "low"
 
-            result = {
-                "answer_text": answer_text,
-                "sources": sources,
-                "confidence": confidence,
-                "query_embedding_similarity": similarities,
-            }
+            source_models = [
+                Source(
+                    url=src["url"],
+                    title=src["title"],
+                    section=src.get("section"),
+                    snippet=src.get("snippet", "")[:300],
+                    char_start=src.get("char_start", 0),
+                    char_end=src.get("char_end", 0),
+                    score=min(max(src.get("score", 0.0), 0.0), 1.0),
+                )
+                for src in sources
+            ]
 
-            self._response_cache[cache_key] = (result, time.time())
-            return result
+            response = ChatResponse(
+                answer_text=answer_text,
+                sources=source_models,
+                confidence=confidence,
+                query_embedding_similarity=similarities,
+            )
+
+            return response
 
         except Exception as e:
-            print(f"❌ Query handler error: {e}")
-            import traceback
-
-            traceback.print_exc()
-            return {
-                "answer_text": NO_KB_MSG,
-                "sources": [],
-                "confidence": "low",
-                "query_embedding_similarity": [],
-            }
+            print(f"[ERROR] Query failed: {type(e).__name__}: {str(e)}")
+            return ChatResponse(
+                answer_text=NO_KB_MSG,
+                sources=[],
+                confidence="low",
+                query_embedding_similarity=[],
+            )
 
 
-_query_handler_instance = None
 
-
-def get_query_handler() -> QueryHandler:
-    global _query_handler_instance
-    if _query_handler_instance is None:
-        _query_handler_instance = QueryHandler()
-    return _query_handler_instance

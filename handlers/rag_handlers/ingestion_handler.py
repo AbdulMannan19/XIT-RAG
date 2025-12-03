@@ -1,24 +1,25 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
-
-from qdrant_client import QdrantClient
 
 from models import IngestionRequest
-from services.rag_services.embedding_service import get_embedding_provider
-from services.rag_services.qdrant_service import ensure_collection, get_client
-from services.rag_services.ingestion_service import process_page
-from helpers.rag_helpers import WebCrawler, SitemapFetcher, StorageManager
+from helpers.rag_helpers.crawlers import WebCrawler, SitemapFetcher
+from helpers.rag_helpers.storage import StorageManager
+from helpers.rag_helpers.parsers import HtmlParser, PdfParser
+from helpers.rag_helpers.chunkers import chunk_page
+from utils import compute_content_hash
 
 COLLECTION_NAME = "irs_rag_v1"
 RATE_LIMIT_RPS = 0.5
 
 
 class IngestionHandler:
-    def __init__(self, qdrant_client: Optional[QdrantClient] = None):
-        self.qdrant_client = qdrant_client or get_client()
-        self.embedding_provider = get_embedding_provider()
+    def __init__(self, embedding_service, qdrant_service, ingestion_service):
+        self.embedding_service = embedding_service
+        self.qdrant_service = qdrant_service
+        self.ingestion_service = ingestion_service
         self.collection_name = COLLECTION_NAME
         self.storage = StorageManager()
+        self.html_parser = HtmlParser()
+        self.pdf_parser = PdfParser()
 
     def _filter_urls(self, urls: list[str], request: IngestionRequest) -> list[str]:
         filtered = urls
@@ -59,16 +60,48 @@ class IngestionHandler:
         filtered_urls = self._filter_urls(urls, request)
         return filtered_urls[:request.max_pages]
 
+    def _process_page(self, url: str, crawler, collection_name: str):
+        
+        try:
+            page = crawler.fetch(url)
+            if not page:
+                return None
+
+            page.content_hash = compute_content_hash(page.raw_content)
+            self.storage.save_raw_page(page)
+
+            if page.content_type.value == "pdf":
+                page = self.pdf_parser.parse(page)
+            else:
+                page = self.html_parser.parse(page)
+
+            self.storage.save_cleaned_page(page)
+
+            chunks = chunk_page(page)
+            if not chunks:
+                return None
+
+            self.storage.save_chunks(chunks, str(page.url))
+
+            chunk_texts = [chunk.chunk_text for chunk in chunks]
+            embeddings = self.embedding_service.get_embedding(chunk_texts)
+
+            self.ingestion_service.upsert_chunks(chunks, embeddings, collection_name)
+
+            return len(chunks)
+
+        except Exception as e:
+            return None
+
     def handle_ingestion(self, request: IngestionRequest) -> dict:
         crawler = WebCrawler(
             base_url=request.seed_url, rate_limit_rps=RATE_LIMIT_RPS
         )
         crawler._check_robots_txt()
 
-        ensure_collection(
-            self.qdrant_client,
+        self.qdrant_service.ensure_collection(
             self.collection_name,
-            self.embedding_provider.vector_size,
+            self.embedding_service.vector_size,
         )
 
         target_urls = self._get_target_urls(request)
@@ -79,7 +112,7 @@ class IngestionHandler:
         with ThreadPoolExecutor(max_workers=request.concurrency) as executor:
             futures = {
                 executor.submit(
-                    process_page, url, crawler, self.storage, self.collection_name
+                    self._process_page, url, crawler, self.collection_name
                 ): url
                 for url in target_urls
             }
@@ -112,12 +145,3 @@ class IngestionHandler:
             "target_urls_found": len(target_urls),
         }
 
-
-_ingestion_handler_instance = None
-
-
-def get_ingestion_handler() -> IngestionHandler:
-    global _ingestion_handler_instance
-    if _ingestion_handler_instance is None:
-        _ingestion_handler_instance = IngestionHandler()
-    return _ingestion_handler_instance

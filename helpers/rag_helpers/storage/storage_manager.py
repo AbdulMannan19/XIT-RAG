@@ -93,32 +93,3 @@ class StorageManager:
                 f.write(orjson.dumps(chunk_dict) + b"\n")
 
         return str(filepath)
-
-    def load_chunks(self, page_url: str) -> list[Chunk]:
-        url_hash = compute_content_hash(page_url)[:16]
-        filename = f"{url_hash}_chunks.jsonl"
-        filepath = self.chunks_dir / filename
-
-        if not filepath.exists():
-            return []
-
-        chunks = []
-        with open(filepath, "rb") as f:
-            for line in f:
-                chunk_dict = orjson.loads(line)
-                chunk = Chunk(
-                    chunk_id=chunk_dict["chunk_id"],
-                    page_url=chunk_dict["page_url"],
-                    chunk_text=chunk_dict["chunk_text"],
-                    chunk_order=chunk_dict["chunk_order"],
-                    section_heading=chunk_dict.get("section_heading"),
-                    char_offset_start=chunk_dict["char_offset_start"],
-                    char_offset_end=chunk_dict["char_offset_end"],
-                    crawl_timestamp=datetime.fromisoformat(chunk_dict["crawl_timestamp"]),
-                    content_type=chunk_dict["content_type"],
-                    raw_html_snippet=chunk_dict.get("raw_html_snippet"),
-                    page_number=chunk_dict.get("page_number"),
-                )
-                chunks.append(chunk)
-
-        return chunks

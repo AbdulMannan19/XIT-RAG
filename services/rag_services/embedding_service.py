@@ -1,47 +1,30 @@
-from functools import lru_cache
-
+from typing import Union, overload
 import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
 
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+
 
 class EmbeddingService:
-    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = EMBEDDING_MODEL):
         self.model_name = model_name
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cpu"
         self.model = SentenceTransformer(model_name, device=self.device)
         self.vector_size = self.model.get_sentence_embedding_dimension()
-        self._warmup()
 
-    def _warmup(self):
-        """Warm up the model with a dummy embedding to avoid cold start."""
-        try:
-            _ = self.get_embedding("warmup")
-        except Exception:
-            pass
+    @overload
+    def get_embedding(self, text: str) -> np.ndarray: ...
 
-    def get_embeddings(self, texts: list[str]) -> np.ndarray:
-        try:
-            embeddings = self.model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
-            return embeddings.astype(np.float32)
-        except Exception as e:
-            raise
+    @overload
+    def get_embedding(self, text: list[str]) -> np.ndarray: ...
 
-    @lru_cache(maxsize=256)
-    def get_embedding_cached(self, text: str) -> tuple:
-        """Get cached embedding as tuple for hashability."""
-        embedding = self.get_embeddings([text])[0]
-        return tuple(embedding)
+    def get_embedding(self, text: Union[str, list[str]]) -> np.ndarray:
+        if isinstance(text, str):
+            text = [text]
+        
+        embeddings = self.model.encode(text, show_progress_bar=False, convert_to_numpy=True)
+        embeddings = embeddings.astype(np.float32)
+        
+        return embeddings[0] if len(text) == 1 else embeddings
 
-    def get_embedding(self, text: str) -> np.ndarray:
-        return self.get_embeddings([text])[0]
-
-
-_embedding_provider_cache = None
-
-
-def get_embedding_provider() -> EmbeddingService:
-    global _embedding_provider_cache
-    if _embedding_provider_cache is None:
-        _embedding_provider_cache = EmbeddingService()
-    return _embedding_provider_cache
