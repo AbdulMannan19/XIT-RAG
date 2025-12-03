@@ -30,7 +30,6 @@ class QueryHandler:
         cutoff: Optional[float] = None,
     ):
         try:
-            print(f"[QUERY] Embedding query...")
             query_embedding = self.embedding_provider.get_embedding(query)
 
             top_k = top_k or TOP_K
@@ -44,7 +43,6 @@ class QueryHandler:
                 cutoff,
                 filters,
             )
-            print(f"[QUERY] Retrieved {len(chunks)} chunks")
 
             if not chunks:
                 return ChatResponse(
@@ -61,7 +59,6 @@ class QueryHandler:
 
             prompt = self.llm.build_rag_prompt(chunks, query)
             answer_text = self.llm.generate(prompt, temperature=0.0, max_tokens=200)
-            print(f"[QUERY] Answer generated")
 
             sources = []
             similarities = []
@@ -110,7 +107,6 @@ class QueryHandler:
             return response
 
         except Exception as e:
-            print(f"[ERROR] Query failed: {type(e).__name__}: {str(e)}")
             return ChatResponse(
                 answer_text=NO_KB_MSG,
                 sources=[],
